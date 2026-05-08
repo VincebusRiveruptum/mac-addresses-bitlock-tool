@@ -64,7 +64,10 @@ def check_bitlocker() -> None:
     try:
         c = wmi.WMI(namespace="root/CIMV2/Security/MicrosoftVolumeEncryption")
     except wmi.x_wmi:
-        print("BitLocker WMI namespace not available on this system.")
+        msg = "BitLocker WMI namespace not available on this system."
+        print(msg)
+        with open("mac_addresses.txt", "a", encoding="utf-8") as f:
+            f.write("\n" + msg + "\n")
         return
 
     PROTECTION_STATUS = {
@@ -82,12 +85,17 @@ def check_bitlocker() -> None:
         5: "Decryption Paused",
     }
 
-    print("BitLocker Status")
-    print("=" * 50)
+    header = "BitLocker Status\n" + "=" * 50
+    print(header)
+    file_content = ["", header]
 
     volumes = list(c.Win32_EncryptableVolume())
     if not volumes:
-        print("  No encryptable volumes found.")
+        msg = "  No encryptable volumes found."
+        print(msg)
+        file_content.append(msg)
+        with open("mac_addresses.txt", "a", encoding="utf-8") as f:
+            f.write("\n".join(file_content) + "\n")
         return
 
     for vol in volumes:
@@ -95,10 +103,18 @@ def check_bitlocker() -> None:
         protection = PROTECTION_STATUS.get(vol.ProtectionStatus, "Unknown")
         conversion = CONVERSION_STATUS.get(vol.ConversionStatus, "Unknown")
 
-        print(f"  Drive          : {drive}")
-        print(f"  Protection     : {protection}")
-        print(f"  Encryption     : {conversion}")
-        print()
+        lines = [
+            f"  Drive          : {drive}",
+            f"  Protection     : {protection}",
+            f"  Encryption     : {conversion}",
+            ""
+        ]
+        for line in lines:
+            print(line)
+        file_content.extend(lines)
+
+    with open("mac_addresses.txt", "a", encoding="utf-8") as f:
+        f.write("\n".join(file_content) + "\n")
 
 
 if __name__ == "__main__":
