@@ -23,27 +23,38 @@ def get_network_adapters() -> None:
     import wmi
 
     c = wmi.WMI()
-    print("Network Adapters")
-    print("=" * 50)
+    header = "Network Adapters\n" + "=" * 50
+    print(header)
+    
+    file_content = [header]
 
     adapters = [a for a in c.Win32_NetworkAdapter() if a.MACAddress]
 
     if not adapters:
-        print("  No adapters with a MAC address found.")
+        msg = "  No adapters with a MAC address found."
+        print(msg)
+        file_content.append(msg)
+        with open("mac_addresses.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(file_content) + "\n")
         return
 
     for adapter in adapters:
         # NetEnabled can be None for non-IP adapters (e.g. Bluetooth)
-        status = (
-            "Enabled" if adapter.NetEnabled
-            else "Disabled" if adapter.NetEnabled is False
-            else "N/A"
-        )
-        print(f"  Name    : {adapter.Name}")
-        print(f"  MAC     : {adapter.MACAddress}")
-        print(f"  Status  : {status}")
-        print(f"  Type    : {adapter.AdapterType or 'Unknown'}")
-        print()
+        if adapter.NetEnabled:
+            status = "Enabled"
+            lines = [
+                f"  Name    : {adapter.Name}",
+                f"  MAC     : {adapter.MACAddress}",
+                f"  Status  : {status}",
+                f"  Type    : {adapter.AdapterType or 'Unknown'}",
+                ""
+            ]
+            for line in lines:
+                print(line)
+            file_content.extend(lines)
+            
+    with open("mac_addresses.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(file_content) + "\n")
 
 
 def check_bitlocker() -> None:
